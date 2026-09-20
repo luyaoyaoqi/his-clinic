@@ -87,11 +87,10 @@ window.addEventListener("resize", () => {
     <!-- 桌面端 Sidebar -->
     <aside v-if="!isMobile" class="sidebar">
       <div class="brand">
-        <div class="brand-text">
-          <div class="brand-title">HIS 端调用</div>
-          <div class="brand-sub">辅助诊疗 · mhi_back_cis</div>
-        </div>
-        <div class="brand-mark">医</div>
+        <svg class="brand-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="6" fill="#2563eb"/>
+          <path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6V8z" fill="#ffffff"/>
+        </svg>
       </div>
 
       <nav class="nav">
@@ -133,11 +132,10 @@ window.addEventListener("resize", () => {
     >
       <div class="drawer-inner">
         <div class="brand">
-          <div class="brand-text">
-            <div class="brand-title">HIS 端调用</div>
-            <div class="brand-sub">辅助诊疗 · mhi_back_cis</div>
-          </div>
-          <div class="brand-mark">医</div>
+          <svg class="brand-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="32" height="32" rx="6" fill="#2563eb"/>
+            <path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6V8z" fill="#ffffff"/>
+          </svg>
         </div>
         <nav class="nav">
           <button
@@ -221,46 +219,21 @@ body {
   height: 100vh;
 }
 
-/* 品牌区：mark 紧贴 sidebar 右边缘，文字在 mark 左边 */
+/* 品牌区：仅居中显示 favicon 同款图标 */
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   padding: 20px 20px 24px;
   border-bottom: 1px solid #f1f2f4;
-  justify-content: flex-end; /* 整体右对齐，mark 贴右 */
 }
 .brand-mark {
   width: 36px;
   height: 36px;
-  display: grid;
-  place-items: center;
+  display: block;
   border-radius: 8px;
-  background: linear-gradient(135deg, #409eff 0%, #2563eb 100%);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: -0.02em;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
   flex-shrink: 0;
-}
-.brand-text {
-  line-height: 1.2;
-  flex: 1;
-  min-width: 0;
-}
-.brand-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2933;
-  letter-spacing: -0.01em;
-}
-.brand-sub {
-  font-size: 11px;
-  color: #909399;
-  margin-top: 2px;
 }
 
 /* nav：每项内容贴右 */
