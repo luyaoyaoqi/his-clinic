@@ -43,6 +43,7 @@ async function restore() {
         <el-col :xs="24" :sm="12">
           <el-form-item label="平台 Base URL" required>
             <el-input v-model="config.baseUrl" placeholder="http://localhost:9100" clearable />
+            <span class="hint">调用接口时自动拼上 <code>/hosp/api/...</code></span>
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">

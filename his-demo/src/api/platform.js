@@ -3,12 +3,12 @@ import axios from 'axios';
 /**
  * 前端直连平台的统一调用封装。
  *
- * 浏览器 → 平台（POST {baseUrl}/api/system/external-api/inbound/<hospital_code>/<endpoint>/）
+ * 浏览器 → 平台（POST {baseUrl}/hosp/api/system/external-api/inbound/<hospital_code>/<endpoint>/）
  * ⚠️ 需要平台 nginx 在该路径返回 CORS 头（Access-Control-Allow-Origin），
  * 否则浏览器会拦截响应，前端拿不到任何数据。
  *
  * @param {object} cfg
- * @param {string} cfg.baseUrl        平台 Base URL（含子路径，末尾斜杠可）
+ * @param {string} cfg.baseUrl        平台 Base URL（不含 /hosp，会自动拼上）
  * @param {string} cfg.hospitalCode   路径占位（医院编码）
  * @param {string} cfg.endpoint       接口名，如 'his_outpatient_visit' 或 'medical_record_query'
  * @param {object} cfg.body           请求体
@@ -16,7 +16,7 @@ import axios from 'axios';
  */
 export async function callPlatform({ baseUrl, hospitalCode, endpoint, body }) {
   const started = performance.now();
-  const url = `${(baseUrl || '').replace(/\/+$/, '')}/api/system/external-api/inbound/${encodeURIComponent(hospitalCode || '')}/${endpoint}/`;
+  const url = `${(baseUrl || '').replace(/\/+$/, '')}/hosp/api/system/external-api/inbound/${encodeURIComponent(hospitalCode || '')}/${endpoint}/`;
   try {
     const resp = await axios.post(url, body, {
       timeout: 30_000,

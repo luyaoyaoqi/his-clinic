@@ -1,10 +1,11 @@
 <script setup>
-import { inject, reactive, ref, watch } from 'vue';
+import { computed, inject, reactive, ref, watch } from 'vue';
 import { ElMessageBox } from 'element-plus';
-import { Refresh } from '@element-plus/icons-vue';
+import { Refresh, CopyDocument, Link } from '@element-plus/icons-vue';
 import { callPlatform } from '../api/platform.js';
-import { lsGet, lsSet } from '../utils/storage.js';
+import { lsGet, lsSet, lsGetJson, lsSetJson } from '../utils/storage.js';
 import { VISIT_DEFAULTS } from '../utils/visitDefaults.js';
+import { CONFIG_DEFAULTS } from '../utils/defaults.js';
 
 const config = inject('config');
 const notify = inject('notify');
@@ -58,6 +59,19 @@ const formRef = ref(null);
 const loading = ref(false);
 const lastResult = ref(null);
 const statusText = ref('未调用');
+
+// 刷新后恢复上次响应（避免关页面、刷新后看不到刚调的结果）
+const VISIT_LAST_RESULT_KEY = 'visit-lastResult';
+{
+  const cached = lsGetJson(VISIT_LAST_RESULT_KEY);
+  if (cached && typeof cached === 'object') {
+    lastResult.value = cached;
+    const ok = cached.body?.code === 20000;
+    statusText.value = ok
+      ? `成功 · 耗时 ${cached.elapsed}ms`
+      : `失败 · HTTP ${cached.httpStatus || '—'}`;
+  }
+}
 
 // 仅 7 个业务必填项配 rules
 const rules = {
@@ -173,6 +187,7 @@ async function submit() {
     body: buildBody(),
   });
   lastResult.value = result;
+  lsSetJson(VISIT_LAST_RESULT_KEY, result);
   const ok = result.body?.code === 20000;
   statusText.value = ok ? `成功 · 耗时 ${result.elapsed}ms` : `失败 · HTTP ${result.httpStatus || '—'}`;
   if (ok) notify.ok('调用成功', `HTTP ${result.httpStatus} · ${result.elapsed}ms`);
@@ -201,6 +216,29 @@ async function confirmRestore() {
 }
 
 const codeOk = (r) => r?.body?.code === 20000;
+
+// 拼出门诊页面 URL：baseUrl + 内置模板，{code} 占位 → 响应里的 data.code
+const clinicUrl = computed(() => {
+  const code = lastResult.value?.body?.data?.code;
+  if (!code) return '';
+  const base = (config.baseUrl || '').replace(/\/+$/, '');
+  return `${base}${CONFIG_DEFAULTS.clinicUrlTemplate.replace('{code}', encodeURIComponent(code))}`;
+});
+
+async function copyClinicUrl() {
+  if (!clinicUrl.value) return;
+  try {
+    await navigator.clipboard.writeText(clinicUrl.value);
+    notify.ok('已复制门诊页面 URL', clinicUrl.value);
+  } catch {
+    notify.err('复制失败', '浏览器拒绝写入剪贴板');
+  }
+}
+
+function openClinicUrl() {
+  if (!clinicUrl.value) return;
+  window.open(clinicUrl.value, '_blank', 'noopener');
+}
 </script>
 
 <template>
@@ -354,17 +392,28 @@ const codeOk = (r) => r?.body?.code === 20000;
 
     <div v-if="lastResult" class="response" :class="{ 'is-fail': !codeOk(lastResult) }">
       <div class="response-head">
-        <el-tag :type="codeOk(lastResult) ? 'success' : (lastResult.error ? 'danger' : 'warning')">
-          HTTP {{ lastResult.httpStatus || '—' }}
-        </el-tag>
-        <el-tag v-if="lastResult.body?.code !== undefined" :type="codeOk(lastResult) ? 'success' : 'danger'">
-          code {{ lastResult.body.code }}
-        </el-tag>
-        <el-tag v-if="lastResult.body?.msg" type="info" effect="plain">msg: {{ lastResult.body.msg }}</el-tag>
-        <el-tag v-if="lastResult.body?.log_id" type="info" effect="plain">log_id: {{ lastResult.body.log_id }}</el-tag>
-        <el-tag v-if="codeOk(lastResult) && lastResult.body?.data?.code" type="success" effect="plain" class="mono">门诊号 {{ lastResult.body.data.code }}</el-tag>
-        <el-tag type="info" effect="plain">{{ lastResult.elapsed }}ms</el-tag>
-        <el-tag v-if="lastResult.error" type="danger">{{ lastResult.error }}</el-tag>
+        <div class="response-tags">
+          <el-tag :type="codeOk(lastResult) ? 'success' : (lastResult.error ? 'danger' : 'warning')">
+            HTTP {{ lastResult.httpStatus || '—' }}
+          </el-tag>
+          <el-tag v-if="lastResult.body?.code !== undefined" :type="codeOk(lastResult) ? 'success' : 'danger'">
+            code {{ lastResult.body.code }}
+          </el-tag>
+          <el-tag v-if="lastResult.body?.msg" type="info" effect="plain">msg: {{ lastResult.body.msg }}</el-tag>
+          <el-tag v-if="lastResult.body?.log_id" type="info" effect="plain">log_id: {{ lastResult.body.log_id }}</el-tag>
+          <el-tag v-if="codeOk(lastResult) && lastResult.body?.data?.code" type="success" effect="plain" class="mono">门诊号 {{ lastResult.body.data.code }}</el-tag>
+          <el-tag type="info" effect="plain">{{ lastResult.elapsed }}ms</el-tag>
+          <el-tag v-if="lastResult.error" type="danger">{{ lastResult.error }}</el-tag>
+        </div>
+        <div v-if="clinicUrl" class="response-actions">
+          <code class="clinic-url" :title="clinicUrl">{{ clinicUrl }}</code>
+          <el-button size="small" plain class="icon-btn" @click="copyClinicUrl" title="复制完整 URL">
+            <el-icon><CopyDocument /></el-icon>复制
+          </el-button>
+          <el-button size="small" type="primary" plain class="icon-btn" @click="openClinicUrl" title="新窗口打开">
+            <el-icon><Link /></el-icon>打开
+          </el-button>
+        </div>
       </div>
       <pre class="response-body">{{ JSON.stringify(lastResult, null, 2) }}</pre>
     </div>
@@ -386,7 +435,27 @@ const codeOk = (r) => r?.body?.code === 20000;
 
 .response { margin-top: 16px; border: 1px solid #ebeef5; border-radius: 6px; overflow: hidden; }
 .response.is-fail { border-color: #fde2e2; }
-.response-head { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #ebeef5; }
+.response-head { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #ebeef5; }
+.response-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.response-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.response-actions .clinic-url {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: #2563eb;
+  background: #ecf5ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid #d9ecff;
+  margin-right: 12px;
+}
+.response-actions .icon-btn { padding: 4px 10px; }
+.response-actions .icon-btn .el-icon { font-size: 14px; }
 .response.is-fail .response-head { background: #fef0f0; }
 .response-body { background: #fff; padding: 16px; font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.55; max-height: 360px; overflow: auto; margin: 0; white-space: pre; color: #ef4444; }
 .response-head .el-tag.mono { font-family: ui-monospace, monospace; font-size: 11px; padding: 0 8px; }

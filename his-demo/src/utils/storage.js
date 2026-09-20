@@ -8,6 +8,16 @@ export function lsSet(key, value) {
   try { localStorage.setItem(PREFIX + key, value); } catch { /* quota */ }
 }
 
+export function lsGetJson(key) {
+  const raw = lsGet(key);
+  if (raw == null) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+export function lsSetJson(key, value) {
+  try { lsSet(key, JSON.stringify(value)); } catch { /* quota / circular */ }
+}
+
 // 把对象所有顶层 key 自动绑到 localStorage（reactive-friendly）
 export function bindReactive(reactiveObj, keyMap) {
   // 初次填充
