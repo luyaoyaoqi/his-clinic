@@ -246,7 +246,7 @@ body {
   line-height: 1.2;
   flex: 1;
   min-width: 0;
-  text-align: right;
+  justify-content: space-between;
 }
 .brand-title {
   font-family: var(--font-display);
