@@ -1,7 +1,7 @@
 <script setup>
 import { computed, inject, reactive, ref, watch } from 'vue';
 import { ElMessageBox } from 'element-plus';
-import { Refresh, CopyDocument, Link } from '@element-plus/icons-vue';
+import { Refresh, CopyDocument, Link, Monitor } from '@element-plus/icons-vue';
 import { callPlatform } from '../api/platform.js';
 import { lsGet, lsSet, lsGetJson, lsSetJson } from '../utils/storage.js';
 import { VISIT_DEFAULTS } from '../utils/visitDefaults.js';
@@ -346,19 +346,19 @@ function openClinicUrl() {
           <div class="sub-section">
             <div class="sub-title">patient_basic</div>
             <el-row :gutter="16">
-              <el-col :xs="24" :sm="12"><el-form-item label="main_remark（主诉）"><el-input v-model="form.ovPbMainRemark" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="input_remark（現病史）"><el-input v-model="form.ovPbInputRemark" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="objective_remark（体格检查）"><el-input v-model="form.ovPbObjectiveRemark" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="assist_check（辅助检查）"><el-input v-model="form.ovPbAssistCheck" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="disease_history（既往史）"><el-input v-model="form.ovPbDiseaseHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="allergy_history（过敏史）"><el-input v-model="form.ovPbAllergyHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="birth_history（出生史）"><el-input v-model="form.ovPbBirthHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="personal_history（个人史）"><el-input v-model="form.ovPbPersonalHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="family_history（家族史）"><el-input v-model="form.ovPbFamilyHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="marital_reproductive_history（婚育史）"><el-input v-model="form.ovPbMaritalHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="epidemics_history（流行病史）"><el-input v-model="form.ovPbEpidemicsHistory" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="look_listen（望闻切诊）"><el-input v-model="form.ovPbLookListen" /></el-form-item></el-col>
-              <el-col :xs="24" :sm="12"><el-form-item label="dialectic（辨证论治）"><el-input v-model="form.ovPbDialectic" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="main_remark（主诉）"><el-input v-model="form.ovPbMainRemark" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="input_remark（現病史）"><el-input v-model="form.ovPbInputRemark" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="objective_remark（体格检查）"><el-input v-model="form.ovPbObjectiveRemark" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="assist_check（辅助检查）"><el-input v-model="form.ovPbAssistCheck" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="disease_history（既往史）"><el-input v-model="form.ovPbDiseaseHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="allergy_history（过敏史）"><el-input v-model="form.ovPbAllergyHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="birth_history（出生史）"><el-input v-model="form.ovPbBirthHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="personal_history（个人史）"><el-input v-model="form.ovPbPersonalHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="family_history（家族史）"><el-input v-model="form.ovPbFamilyHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="marital_reproductive_history（婚育史）"><el-input v-model="form.ovPbMaritalHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="epidemics_history（流行病史）"><el-input v-model="form.ovPbEpidemicsHistory" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="look_listen（望闻切诊）"><el-input v-model="form.ovPbLookListen" type="textarea" :rows="2" /></el-form-item></el-col>
+              <el-col :xs="24" :sm="12"><el-form-item label="dialectic（辨证论治）"><el-input v-model="form.ovPbDialectic" type="textarea" :rows="2" /></el-form-item></el-col>
               <el-col :xs="24" :sm="8"><el-form-item label="height"><el-input-number v-model="form.ovPbHeight" :min="0" controls-position="right" style="width:100%" /></el-form-item></el-col>
               <el-col :xs="24" :sm="8"><el-form-item label="weight"><el-input-number v-model="form.ovPbWeight" :min="0" controls-position="right" style="width:100%" /></el-form-item></el-col>
               <el-col :xs="24" :sm="8"><el-form-item label="temperature"><el-input-number v-model="form.ovPbTemperature" :step="0.1" controls-position="right" style="width:100%" /></el-form-item></el-col>
@@ -406,6 +406,10 @@ function openClinicUrl() {
           <el-tag v-if="lastResult.error" type="danger">{{ lastResult.error }}</el-tag>
         </div>
         <div v-if="clinicUrl" class="response-actions">
+          <span class="action-label">
+            <el-icon><Monitor /></el-icon>
+            <span>浏览页面</span>
+          </span>
           <code class="clinic-url" :title="clinicUrl">{{ clinicUrl }}</code>
           <el-button size="small" plain class="icon-btn" @click="copyClinicUrl" title="复制完整 URL">
             <el-icon><CopyDocument /></el-icon>复制
@@ -438,6 +442,17 @@ function openClinicUrl() {
 .response-head { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #ebeef5; }
 .response-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .response-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.response-actions .action-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.response-actions .action-label .el-icon { font-size: 14px; }
 .response-actions .clinic-url {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11.5px;
