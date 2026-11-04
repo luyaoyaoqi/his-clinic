@@ -1,13 +1,11 @@
 <script setup>
 import { reactive, provide, watch, ref, computed } from "vue";
 import { ElMessage } from "element-plus";
-import { Setting, EditPen, Search, Menu } from "@element-plus/icons-vue";
+import { Setting, EditPen, Menu } from "@element-plus/icons-vue";
 import ConfigPanel from "./components/ConfigPanel.vue";
 import VisitForm from "./components/VisitForm.vue";
-import QueryForm from "./components/QueryForm.vue";
 import { lsGet, lsSet } from "./utils/storage.js";
 import { CONFIG_DEFAULTS } from "./utils/defaults.js";
-import { VISIT_DEFAULTS } from "./utils/visitDefaults.js";
 
 const config = reactive({
   baseUrl: lsGet("cfg-baseUrl") ?? CONFIG_DEFAULTS.baseUrl,
@@ -33,14 +31,9 @@ watch(
   (v) => lsSet("cfg-appSecret", v),
 );
 
-// 发起门诊 / 主动查询 共用的 his_record_id（单一来源，任一边输入都会同步到另一边）
-const hisRecordId = ref(
-  lsGet("hisRecordId") ?? VISIT_DEFAULTS.ovHisRecordId,
-);
-watch(hisRecordId, (v) => lsSet("hisRecordId", v ?? ""));
+// 发起门诊 / 主动查询 的 his_record_id 由各类型面板内部管理（门诊、住院各自独立）
 
 provide("config", config);
-provide("hisRecordId", hisRecordId);
 provide("notify", {
   ok: (title, message) =>
     ElMessage({
@@ -59,13 +52,11 @@ provide("notify", {
 
 const NAV = [
   { id: "config", label: "对接配置", icon: Setting },
-  { id: "visit", label: "发起门诊", icon: EditPen },
-  { id: "query", label: "主动查询", icon: Search },
+  { id: "visit", label: "HIS 发起", icon: EditPen },
 ];
 const TITLE_MAP = {
   config: "对接配置",
-  visit: "HIS 发起门诊",
-  query: "HIS 主动查询病历",
+  visit: "HIS 发起门诊 / 住院",
 };
 const active = ref("config");
 const topbarTitle = computed(() => TITLE_MAP[active.value] || "");
@@ -169,7 +160,6 @@ window.addEventListener("resize", () => {
       <div class="content">
         <div v-show="active === 'config'" class="pane"><ConfigPanel /></div>
         <div v-show="active === 'visit'" class="pane"><VisitForm /></div>
-        <div v-show="active === 'query'" class="pane"><QueryForm /></div>
 
         <footer class="footer">
           <span>辅助诊疗系统对接演示 · 仅供本地调试</span>

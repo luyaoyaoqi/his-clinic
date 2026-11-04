@@ -47,7 +47,7 @@ async function restore() {
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item label="医院编码（路径占位 / outer_institution_code）" required>
+          <el-form-item label="医院编码（outer_institution_code）" required>
             <el-input v-model="config.hospitalCode" placeholder="hospitalA" clearable />
           </el-form-item>
         </el-col>

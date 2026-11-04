@@ -9,7 +9,7 @@ import axios from 'axios';
  *
  * @param {object} cfg
  * @param {string} cfg.baseUrl        平台 Base URL（不含 /hosp，会自动拼上）
- * @param {string} cfg.hospitalCode   路径占位（医院编码）
+ * @param {string} cfg.hospitalCode   医院编码
  * @param {string} cfg.endpoint       接口名，如 'his_outpatient_visit' 或 'medical_record_query'
  * @param {object} cfg.body           请求体
  * @returns {Promise<{httpStatus: number, body: any, error: string|null, elapsed: number}>}

@@ -3,26 +3,49 @@ import { inject, reactive, ref, watch } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { Refresh } from '@element-plus/icons-vue';
 import { callPlatform } from '../api/platform.js';
+import { lsGetJson, lsSetJson } from '../utils/storage.js';
+import { VISIT_MODES } from '../utils/visitDefaults.js';
+
+const props = defineProps({
+  // 'outpatient' | 'inpatient'，决定标题文案与缓存命名空间
+  mode: { type: String, required: true },
+  // 与同类型的「发起」卡片共享 his_record_id
+  hisRecordId: { type: String, default: '' },
+});
+const emit = defineEmits(['update:hisRecordId']);
 
 const config = inject('config');
 const notify = inject('notify');
 
-// 与「发起门诊」面板共享同一个 his_record_id（任一边改动，另一边实时同步）
-const sharedHisRecordId = inject('hisRecordId');
-const form = reactive({ mqHisRecordId: sharedHisRecordId.value ?? '' });
-watch(sharedHisRecordId, (v) => {
+const MODE = VISIT_MODES[props.mode];
+
+const form = reactive({ mqHisRecordId: props.hisRecordId ?? '' });
+watch(() => props.hisRecordId, (v) => {
   const nv = v ?? '';
   if (form.mqHisRecordId !== nv) form.mqHisRecordId = nv;
 });
 watch(() => form.mqHisRecordId, (v) => {
   const nv = v ?? '';
-  if (sharedHisRecordId.value !== nv) sharedHisRecordId.value = nv;
+  if ((props.hisRecordId ?? '') !== nv) emit('update:hisRecordId', nv);
 });
 
 const formRef = ref(null);
 const loading = ref(false);
 const lastResult = ref(null);
 const statusText = ref('未调用');
+
+// 各类型的查询结果分开缓存
+const LAST_RESULT_KEY = 'query-lastResult';
+{
+  const cached = lsGetJson(LAST_RESULT_KEY, MODE.ns);
+  if (cached && typeof cached === 'object') {
+    lastResult.value = cached;
+    const ok = cached.body?.code === 20000;
+    statusText.value = ok
+      ? `成功 · 耗时 ${cached.elapsed}ms`
+      : `失败 · HTTP ${cached.httpStatus || '—'}`;
+  }
+}
 
 const rules = {
   mqHisRecordId: [{ required: true, message: 'HIS 病历唯一标识必填', trigger: 'blur' }],
@@ -54,6 +77,7 @@ async function submit() {
     },
   });
   lastResult.value = result;
+  lsSetJson(LAST_RESULT_KEY, result, MODE.ns);
   const ok = result.body?.code === 20000;
   statusText.value = ok ? `成功 · 耗时 ${result.elapsed}ms` : `失败 · HTTP ${result.httpStatus || '—'}`;
   if (ok) notify.ok('调用成功', `HTTP ${result.httpStatus} · ${result.elapsed}ms`);
@@ -63,7 +87,7 @@ async function submit() {
 }
 
 function restore() {
-  form.mqHisRecordId = sharedHisRecordId.value ?? '';
+  form.mqHisRecordId = props.hisRecordId ?? '';
   formRef.value?.clearValidate();
   notify.ok('已恢复默认样例');
 }
@@ -89,7 +113,7 @@ const codeOk = (r) => r?.body?.code === 20000;
     <template #header>
       <div class="card-head">
         <span class="card-title">
-          HIS 主动查询病历（medical_record_query）
+          HIS 主动查询{{ MODE.label }}病历（medical_record_query）
         </span>
         <div class="head-right">
           <span class="endpoint">POST /api/system/external-api/inbound/{hospital_code}/medical_record_query/</span>
@@ -104,7 +128,7 @@ const codeOk = (r) => r?.body?.code === 20000;
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <el-form-item label="his_record_id" prop="mqHisRecordId">
+          <el-form-item label="his_record_id（HIS 病历唯一编号）" prop="mqHisRecordId">
             <el-input v-model="form.mqHisRecordId" placeholder="34997589" />
           </el-form-item>
         </el-col>

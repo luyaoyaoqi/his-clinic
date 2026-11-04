@@ -1,21 +1,23 @@
 const PREFIX = 'his-demo:';
 
-export function lsGet(key) {
-  try { return localStorage.getItem(PREFIX + key); } catch { return null; }
+// ns 为命名空间（namespace），用于门诊 / 住院两套数据分开缓存
+// 例：lsGet('ovDeptCode', 'inpatient.') → localStorage['his-demo:inpatient.ovDeptCode']
+export function lsGet(key, ns = '') {
+  try { return localStorage.getItem(PREFIX + ns + key); } catch { return null; }
 }
 
-export function lsSet(key, value) {
-  try { localStorage.setItem(PREFIX + key, value); } catch { /* quota */ }
+export function lsSet(key, value, ns = '') {
+  try { localStorage.setItem(PREFIX + ns + key, value); } catch { /* quota */ }
 }
 
-export function lsGetJson(key) {
-  const raw = lsGet(key);
+export function lsGetJson(key, ns = '') {
+  const raw = lsGet(key, ns);
   if (raw == null) return null;
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-export function lsSetJson(key, value) {
-  try { lsSet(key, JSON.stringify(value)); } catch { /* quota / circular */ }
+export function lsSetJson(key, value, ns = '') {
+  try { lsSet(key, JSON.stringify(value), ns); } catch { /* quota / circular */ }
 }
 
 // 把对象所有顶层 key 自动绑到 localStorage（reactive-friendly）
