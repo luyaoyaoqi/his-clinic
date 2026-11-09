@@ -1,90 +1,120 @@
 # his-demo
 
-HIS 端调用辅助诊疗系统（mhi_back_cis）接口的 Demo，覆盖两个 inbound 接口：
+HIS 端调用**辅助诊疗系统**（平台侧 `mhi_back_cis`）接口的调试 Demo。
 
-| 接口编码 | 接口名称 | 路径 |
+**纯前端应用**（Vite + Vue 3 + Element Plus + axios），无后端服务、无数据库：浏览器直接向平台发起 POST 请求，用于接口联调、字段验证与演示。
+
+当前覆盖两个 inbound 接口：
+
+| 接口编码 | 接口名称 | 请求路径 |
 | --- | --- | --- |
-| `his_outpatient_visit` | HIS 发起门诊 | `POST /api/system/external-api/inbound/<hospital_code>/his_outpatient_visit/` |
-| `medical_record_query` | HIS 主动查询病历 | `POST /api/system/external-api/inbound/<hospital_code>/medical_record_query/` |
+| `his_outpatient_visit` | HIS 发起门诊 / 住院 | `POST /hosp/api/system/external-api/inbound/<hospital_code>/his_outpatient_visit/` |
+| `medical_record_query` | HIS 主动查询病历 | `POST /hosp/api/system/external-api/inbound/<hospital_code>/medical_record_query/` |
 
-技术栈：**Vite + Vue 3 + Element Plus + Express + axios**
+> 完整接口规范（字段定义、错误码、映射表）见仓库根目录的 `辅助诊疗系统_接口对接文档.md`。
 
-## 启动
+---
+
+## 快速开始
 
 ```bash
 cd his-demo
 npm install
-npm run dev          # 同时启 Vite (5173) + Node 后端 (3000)
+npm run dev
 ```
 
-浏览器打开 http://localhost:5173
+浏览器打开终端输出的地址（默认 <http://localhost:5173/>）。
 
-### 其他命令
+### 命令
 
 | 命令 | 说明 |
 | --- | --- |
-| `npm run dev:web` | 只启 Vite（前端） |
-| `npm run dev:api` | 只启 Node（后端，端口 3000） |
-| `npm start` | 只启 Node 后端（不依赖前端） |
-| `npm run build` | 生产构建到 `dist/` |
+| `npm run dev` | 启动 Vite 开发服务器（HMR） |
+| `npm run build` | 生产构建，产物输出到 `his-demo/dist/` |
+| `npm run preview` | 本地预览构建产物 |
 
-> Vite 默认把 `/demo/*` 和 `/health` 代理到 `http://localhost:3000`，所以前端无需配置 CORS。
+### 部署
+
+- **GitHub Pages**：`.github/workflows/deploy.yml` 在 `main` 分支推送后自动构建并发布。
+  Vite 的 `base` 已设为 `/his-clinic/`，对应页面 `luyaoyaoqi.github.io/his-clinic/`。
+- **本地静态托管**：`npm run build` 后把 `dist/` 交给任意静态服务器即可（注意 `base` 需要相应调整）。
+
+---
+
+## 使用步骤
+
+1. **对接配置**（页面左侧「对接配置」）
+   填写平台 Base URL、医院编码、App ID、App Secret。
+   Base URL 不含 `/hosp` 前缀，调用时由 `src/api/platform.js` 自动拼接。
+2. **HIS 发起**（页面左侧「HIS 发起」）
+   - 卡片内含「门诊 / 住院」两个 Tab，分别对应 `source_type = 1` / `2`；
+   - 填入 7 项业务必填（病历编号、机构编码、科室编码、医生编码、患者 ID / 姓名 / 年龄），点「提交发起门诊 / 住院」；
+   - 成功后自动拼出病历页面 URL（`data.code` 填入模板 `{code}`），可复制或直接打开。
+3. **主动查询病历**
+   与上方共用同一个 `his_record_id`（两边实时同步），只需填编号即可发起 `medical_record_query`。
+
+所有输入与最近一次响应都会实时缓存到浏览器 `localStorage`，刷新页面不丢失。
+
+---
 
 ## 目录结构
 
 ```
 his-demo/
 ├── package.json
-├── vite.config.mjs                    # Vite 配置（含后端代理）
-├── index.html                         # Vite 入口
-├── src/
-│   ├── main.js                        # Vue 应用 + Element Plus 注入
-│   ├── App.vue                        # 根布局（provide 全局 config）
-│   ├── api/
-│   │   └── platform.js                # axios 调用封装
-│   ├── utils/
-│   │   └── storage.js                 # localStorage 工具
-│   ├── components/
-│   │   ├── ConfigPanel.vue            # 顶部对接配置
-│   │   ├── VisitForm.vue              # 发起门诊表单
-│   │   └── QueryForm.vue              # 查询病历表单
-│   ├── config.js                      # 后端：仅读 PORT
-│   ├── server.js                      # 后端：路由 /health 和 /demo/*
-│   └── api/
-│       ├── platformClient.js          # 后端：axios 工厂
-│       ├── hisOutpatientVisit.js      # 后端：发起门诊
-│       └── medicalRecordQuery.js      # 后端：查询病历
-└── README.md
+├── vite.config.mjs          # Vite 配置（base=/his-clinic/，端口 5173）
+├── index.html               # 入口 HTML
+├── public/favicon.svg
+└── src/
+    ├── main.js              # Vue 应用挂载 + Element Plus（中文 locale）
+    ├── App.vue              # 根布局：侧边栏导航 + provide(config / notify)
+    ├── api/
+    │   └── platform.js      # axios 统一封装：拼 URL、计时、归一化返回
+    ├── utils/
+    │   ├── defaults.js      # 全局默认配置（BaseURL / 医院编码 / App 凭据 / 门诊 URL 模板）
+    │   ├── storage.js       # localStorage 工具（含命名空间隔离）
+    │   └── visitDefaults.js # 门诊 / 住院两套表单样例与模式定义
+    └── components/
+        ├── ConfigPanel.vue  # 对接配置卡片
+        ├── VisitForm.vue    # 门诊 / 住院 Tab 容器
+        ├── VisitPanel.vue   # 发起门诊（住院）表单、请求构造、响应展示
+        └── QueryForm.vue    # 主动查询病历卡片
 ```
 
-## 后端路由（不变）
+---
 
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| GET | `/health` | 健康检查 |
-| POST | `/demo/his-outpatient-visit` | 透传调用平台 |
-| POST | `/demo/medical-record-query` | 透传调用平台 |
+## 数据流
 
-请求体格式：
-
-```json
-{
-  "baseUrl": "http://localhost:9100",
-  "hospitalCode": "hospitalA",
-  "body": { /* 平台接口的完整 JSON 请求体 */ }
-}
+```
+浏览器 (Vue)  ──POST JSON──▶  平台 /hosp/api/system/external-api/inbound/<hospital_code>/<endpoint>/
 ```
 
-响应原样返回 `{ httpStatus, body, error }` + `elapsed`（前端新增的耗时字段）。
+`src/api/platform.js` 的 `callPlatform({ baseUrl, hospitalCode, endpoint, body })` 是唯一的出口，返回统一结构：
 
-## 使用步骤
+```js
+{ httpStatus: number, body: any, error: string | null, elapsed: number }
+```
 
-1. 顶部「对接配置」填写：Base URL / Hospital Code / App ID / App Secret
-2. ① HIS 发起门诊：填必填项（his_record_id / institution / department / doctor / 患者 ID-姓名-年龄），点提交
-3. ② 主动查询病历：只需填 his_record_id
-4. 所有输入实时缓存到 localStorage
+- `httpStatus`：HTTP 状态码；网络层失败时为 `0`；
+- `body`：平台原始响应（平台用 `code === 20000` 表示成功，另有 `msg`、`log_id`、`data`）；
+- `error`：网络层错误描述（CORS 拦截、超时、连接拒绝等）；
+- `elapsed`：本次调用耗时（毫秒，前端新增）。
 
-## 安全注意
+---
 
-- App Secret 在页面以 `type="password"` 遮罩，但仍以明文落到 localStorage，仅适用于开发调试，**不要用此 demo 部署到公网**
-- 后端不做凭据校验，凭据由浏览器表单传入，仅用于透传
+## 本地缓存
+
+| 键 | 内容 |
+| --- | --- |
+| `his-demo:cfg-baseUrl` / `cfg-hospitalCode` / `cfg-appId` / `cfg-appSecret` | 对接配置 |
+| `his-demo:outpatient.*` / `his-demo:inpatient.*` | 门诊 / 住院两套表单数据、共享的 `hisRecordId`、最近一次响应 |
+
+门诊与住院通过命名空间前缀隔离，互不干扰；旧版本的无前缀数据在首次访问时自动迁移到 `outpatient.` 命名空间。
+
+---
+
+## 注意事项
+
+- **CORS**：浏览器直连平台，平台侧需在该路径返回 `Access-Control-Allow-Origin`，否则请求会被浏览器拦截（表现为 `error` 为网络类错误、`httpStatus` 为 0）。
+- **凭据**：App ID / App Secret 由表单传入并存于 `localStorage`（`src/utils/defaults.js` 中带内置默认值）。仅适用于内网 / 本地调试环境，**不要用于公网部署**。
+- **平台鉴权**：当前按平台文档以 `app_id` / `app_secret` 放在请求体中，未实现额外的请求头签名。
